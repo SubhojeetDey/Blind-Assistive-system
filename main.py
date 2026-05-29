@@ -391,3 +391,29 @@ def get_all_users(
         }
         for user in users
     ]
+
+@app.post('/get/ride/finished/',tags=['Ride'])
+def finish_ride(
+    token: str = Depends(driver_oauth2_scheme),
+    db: Session = Depends(get_db)
+):
+    username,user_id = auths.verify_token(token)
+    driver = db.query(models.Driver).filter(models.Driver.user_id==user_id).first()
+    if driver is None:
+        raise HTTPException(status_code=401,detail="Unauthorized.")
+    ride = db.query(models.Ride).filter(models.Ride.driver_id==user_id,models.Ride.status=="Accepted").first()
+    if ride is None:
+        raise HTTPException(status_code=404,detail="Ride not found.")
+    if ride.driver_id != user_id:
+        raise HTTPException(status_code=403,detail="Forbidden.")
+    ride.status = "Finished"
+    new_notification = models.Notifications(
+        message="Your ride has been marked as finished.",
+        user_id=ride.user_id
+    )
+    db.add(new_notification)    
+    db.commit()
+    db.refresh(ride)
+    return {
+        "message": "Ride marked as finished"
+    }
