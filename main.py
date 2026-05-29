@@ -345,7 +345,7 @@ def get_notifications(
     if user is None:
         raise HTTPException(status_code=401,detail="Unauthorized.")
     id = user.children[0].user_id if user.children else None
-    notifications = db.query(models.Notifications).filter(models.Notifications.user_id==user_id).all()
+    notifications = db.query(models.Notifications).filter(models.Notifications.user_id==id).all()
     return [
         {
             "message": notification.message,
