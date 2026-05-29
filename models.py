@@ -44,14 +44,14 @@ class User(Base):
     password:Mapped[str] = mapped_column(String,nullable=False)
     created_at:Mapped[datetime] = mapped_column(DateTime(timezone=True),nullable=False,default=lambda: datetime.now(timezone.utc))
     email:Mapped[str] = mapped_column(String(100),nullable=True,unique=True)
+    phone_number:Mapped[str] = mapped_column(String(20),nullable=True,unique=True)
     firstname:Mapped[str] = mapped_column(String,nullable=True,unique=False)
     lastname:Mapped[str] = mapped_column(String,nullable=True,unique=False)
+    ride:Mapped[List['Ride']] = relationship(back_populates="user")
     address:Mapped[str] = mapped_column(String,nullable=True)
-    # consignments:Mapped[List["Consignment"]] = relationship(
-    #     secondary=user_consignment,
-    #     back_populates="users"
-    # )
+    current_location:Mapped[str] = mapped_column(String,nullable=True)
     logs:Mapped[List["Log"]] = relationship(back_populates="user")
+    notifications:Mapped[List["Notifications"]] = relationship(back_populates="user")
     device_id:Mapped[str] = mapped_column(String,nullable=True,unique=True)
     guardians: Mapped[List["User"]] = relationship(
         "User",
@@ -82,3 +82,36 @@ class Log(Base):
     user_id:Mapped[str] = mapped_column(ForeignKey("Users.user_id"),nullable=False)
 
 
+class Driver(Base):
+    __tablename__ = "Drivers"
+
+    user_id:Mapped[str]  = mapped_column(String,unique=True,nullable=False,primary_key=True,default=lambda: str(uuid.uuid4()))
+    username:Mapped[str] = mapped_column(String(50),unique=True,nullable=False)
+    password:Mapped[str] = mapped_column(String,nullable=False)
+    created_at:Mapped[datetime] = mapped_column(DateTime(timezone=True),nullable=False,default=lambda: datetime.now(timezone.utc))
+    email:Mapped[str] = mapped_column(String(100),nullable=True,unique=True)
+    firstname:Mapped[str] = mapped_column(String,nullable=True,unique=False)
+    lastname:Mapped[str] = mapped_column(String,nullable=True,unique=False)
+    address:Mapped[str] = mapped_column(String,nullable=True)
+    ride:Mapped[List['Ride']] = relationship(back_populates="driver")
+
+class Ride(Base):
+    __tablename__ = "Rides"
+
+    id:Mapped[int] = mapped_column(Integer,unique=True,primary_key=True,index=True,nullable=False)
+    created_at:Mapped[datetime] = mapped_column(DateTime(timezone=True),nullable=True,default=datetime.now(timezone.utc))
+    driver:Mapped['Driver'] = relationship(back_populates="ride")
+    driver_id:Mapped[str] = mapped_column(ForeignKey("Drivers.user_id"),nullable=True)
+    user:Mapped['User'] = relationship(back_populates='ride')
+    user_id:Mapped[str] = mapped_column(ForeignKey("Users.user_id"),nullable=True)
+    current_location:Mapped[str] = mapped_column(String,nullable=False)
+    status:Mapped[str] = mapped_column(String,nullable=True,default=None)
+
+class Notifications(Base):
+    __tablename__ = "Notifications"
+
+    id:Mapped[int] = mapped_column(Integer,unique=True,primary_key=True,index=True,nullable=False)
+    user:Mapped['User'] = relationship(back_populates="notifications")
+    user_id:Mapped[str] = mapped_column(ForeignKey("Users.user_id"),nullable=False)
+    message:Mapped[str] = mapped_column(String,nullable=False)
+    created_at:Mapped[datetime] = mapped_column(DateTime(timezone=True),default=lambda: datetime.now(timezone.utc))

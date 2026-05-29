@@ -71,3 +71,11 @@ def verify_user(user_id:str,db:Session):
     if user is None:
         raise HTTPException(status_code=404,detail="User not Found.")
     return user
+
+def authenticate_driver(username:str,password:str,db:Session):
+    user = db.query(models.Driver).filter(models.Driver.username == str(username)).first()
+    if not verify_password(password,user.password):
+        return False
+    if user is None:
+        return False
+    return user
